@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -18,6 +19,7 @@ var globalConfig *Configuration = nil
 type Configuration struct {
 	Role             string
 	ReplicationNodes []string
+	QuorumSize       int
 }
 
 func handleEnvironmentVariables() error {
@@ -40,6 +42,18 @@ func handleEnvironmentVariables() error {
 
 	followerNodes := strings.Split(replicationNodes, ",")
 	globalConfig.ReplicationNodes = followerNodes
+
+	quorumSize := os.Getenv("QUORUM_SIZE")
+	if roleEnv == ROLE_LEADER && quorumSize == "" {
+		return ErrorMissingQuorumSize()
+	}
+
+	size, err := strconv.Atoi(quorumSize)
+	if roleEnv == ROLE_LEADER && err != nil {
+		return ErrorInvalidQuorumSize()
+	}
+
+	globalConfig.QuorumSize = size
 
 	return nil
 }

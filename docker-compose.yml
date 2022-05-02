@@ -8,6 +8,7 @@ services:
       - NODE_ROLE=LEADER
       # TODO: Abstract the ports into variables, and dynamically create this env variable based on the ports
       - REPLICATION_NODES=http://localhost:8081
+      - QUORUM_SIZE=2
 
   follower_one:
     build: .
