@@ -6,6 +6,7 @@ import (
 	"github.com/benjamin-whitehead/boxer-db/m/v2/api"
 	"github.com/benjamin-whitehead/boxer-db/m/v2/config"
 	"github.com/benjamin-whitehead/boxer-db/m/v2/db"
+	"github.com/benjamin-whitehead/boxer-db/m/v2/replication"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +17,14 @@ func main() {
 	router := gin.Default()
 
 	api.InitializeAPIRoutes(router)
+
+	// Initialize the log
+
+	if configuration.Role == config.ROLE_LEADER {
+		// TODO: Not sure if this should be for follower as well as leader, we will see
+		log.Println("Initializing log...")
+		replication.InitializeLog()
+	}
 
 	// TODO: Refactor
 	if configuration.Role == config.ROLE_LEADER {

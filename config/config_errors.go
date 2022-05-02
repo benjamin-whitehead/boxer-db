@@ -10,6 +10,7 @@ const (
 	LARGE_QUORUM_SIZE_ERROR_MESSAGE                = "quorum size is larger than number of total nodes"
 	MISSING_QUORUM_SIZE_ERROR_MESSAGE              = "missing quorum size"
 	INVALID_QUORUM_SIZE_ERROR_MESSAGE              = "invalid quorum size, did you specify a number?"
+	MISSING_LOG_FILE_LOCATION_ERROR_MESSAGE        = "missing log file location"
 )
 
 func ErrorMissingRole() error {
@@ -30,4 +31,8 @@ func ErrorMissingQuorumSize() error {
 
 func ErrorInvalidQuorumSize() error {
 	return fmt.Errorf(INVALID_QUORUM_SIZE_ERROR_MESSAGE)
+}
+
+func ErrorMissingLogFileLocation() error {
+	return fmt.Errorf(MISSING_LOG_FILE_LOCATION_ERROR_MESSAGE)
 }

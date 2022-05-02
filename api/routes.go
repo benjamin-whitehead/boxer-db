@@ -6,6 +6,7 @@ import (
 
 	"github.com/benjamin-whitehead/boxer-db/m/v2/config"
 	"github.com/benjamin-whitehead/boxer-db/m/v2/db"
+	"github.com/benjamin-whitehead/boxer-db/m/v2/replication"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,7 +37,12 @@ func PutKey(c *gin.Context) {
 	key := c.Param("key")
 	value := request.Value
 
-	db.GlobalStore.Put(db.BoxerKey{Key: key}, db.BoxerValue{Value: value, Meta: db.BoxerValueMetadata{Timestamp: time.Now().UnixNano()}})
+	boxerKey := db.BoxerKey{Key: key}
+	boxerValue := db.BoxerValue{Value: value, Meta: db.BoxerValueMetadata{Timestamp: time.Now().UnixNano()}}
+
+	replication.GlobalLog.AppendLog(boxerKey, boxerValue, replication.COMMAND_TYPE_WRITE)
+
+	db.GlobalStore.Put(boxerKey, boxerValue)
 	c.Status(http.StatusOK)
 }
 

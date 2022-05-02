@@ -1,6 +1,8 @@
 package db
 
-import "sync"
+import (
+	"sync"
+)
 
 type BoxerKey struct {
 	Key string
