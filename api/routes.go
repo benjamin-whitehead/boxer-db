@@ -40,7 +40,7 @@ func PutKey(c *gin.Context) {
 	boxerKey := db.BoxerKey{Key: key}
 	boxerValue := db.BoxerValue{Value: value, Meta: db.BoxerValueMetadata{Timestamp: time.Now().UnixNano()}}
 
-	replication.GlobalLog.AppendLog(boxerKey, boxerValue, replication.COMMAND_TYPE_WRITE)
+	replication.GetLog().AppendLog(boxerKey, boxerValue, replication.COMMAND_TYPE_WRITE)
 
 	db.GlobalStore.Put(boxerKey, boxerValue)
 	c.Status(http.StatusOK)

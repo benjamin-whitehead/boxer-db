@@ -11,20 +11,30 @@ import (
 )
 
 func main() {
-	db.InitializeStore()
+
 	configuration := config.GetConfig()
+	// TODO: Not sure if this should be for follower as well as leader, we will see
+	log.Println("Initializing log...")
+	replication.InitializeLog()
+
+	// InitializeLog needs to be called before InitializeStore
+	db.InitializeStore()
+
+	if replication.GetLog().HadData {
+		log.Println("Restoring log...")
+		// Had data, load the data into the store
+		for _, entry := range replication.GetLog().Entries {
+			if entry.CommandType == replication.COMMAND_TYPE_WRITE {
+				db.GlobalStore.Put(entry.EntryKey, entry.EntryValue)
+			}
+		}
+	}
 
 	router := gin.Default()
 
 	api.InitializeAPIRoutes(router)
 
 	// Initialize the log
-
-	if configuration.Role == config.ROLE_LEADER {
-		// TODO: Not sure if this should be for follower as well as leader, we will see
-		log.Println("Initializing log...")
-		replication.InitializeLog()
-	}
 
 	// TODO: Refactor
 	if configuration.Role == config.ROLE_LEADER {

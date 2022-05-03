@@ -57,7 +57,7 @@ func handleEnvironmentVariables() error {
 	globalConfig.QuorumSize = size
 
 	logLocation := os.Getenv("LOG_FILE")
-	if roleEnv == ROLE_LEADER && logLocation == "" {
+	if logLocation == "" {
 		return ErrorMissingLogFileLocation()
 	}
 
