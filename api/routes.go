@@ -68,3 +68,35 @@ func GetRole(c *gin.Context) {
 	role := config.GetConfig().Role
 	c.JSON(http.StatusOK, RoleResponse{Role: role})
 }
+
+func ReplicateLog(c *gin.Context) {
+	var request ReplicationRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	var err error
+
+	for _, logEntry := range request.Log {
+
+		if logEntry.CommandType == replication.COMMAND_TYPE_WRITE {
+			db.GlobalStore.Put(logEntry.EntryKey, logEntry.EntryValue)
+			replication.GetLog().AppendLog(logEntry.EntryKey, logEntry.EntryValue, replication.COMMAND_TYPE_WRITE)
+		}
+		if logEntry.CommandType == replication.COMMAND_TYPE_DELETE {
+			err = db.GlobalStore.Delete(logEntry.EntryKey)
+			replication.GetLog().AppendLog(logEntry.EntryKey, db.BoxerValue{}, replication.COMMAND_TYPE_DELETE)
+		}
+		if logEntry.CommandType == replication.COMMAND_TYPE_READ {
+			_, err = db.GlobalStore.Get(logEntry.EntryKey)
+			replication.GetLog().AppendLog(logEntry.EntryKey, db.BoxerValue{}, replication.COMMAND_TYPE_READ)
+		}
+
+	}
+	if err != nil {
+		c.Status(http.StatusNotFound)
+	}
+	c.Status(http.StatusOK)
+
+}

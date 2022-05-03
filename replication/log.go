@@ -94,5 +94,9 @@ func (l *Log) writeLogToFile() (bool, error) {
 		return false, err
 	}
 	log.Println("log saved to file")
+
+	// Replicate the log to follower nodes
+	ReplicateLog()
+
 	return true, nil
 }
