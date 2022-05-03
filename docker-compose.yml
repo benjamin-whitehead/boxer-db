@@ -1,4 +1,11 @@
 version: "3.9"
+
+volumes:
+  leader_volume:
+    driver: local
+  follower_one_vol:
+    driver: local
+
 services:
   leader:
     volumes:
@@ -21,10 +28,4 @@ services:
       - NODE_ROLE=FOLLOWER
       - LOG_FILE=./tmp/wal.log
     volumes:
-      - follower_one_vol:/home/boxer/volumes/leader
-
-volumes:
-  leader_volume:
-    driver: local
-  follower_one_vol:
-    driver: local
+      - follower_one_vol:/home/boxer/volumes/follower_one

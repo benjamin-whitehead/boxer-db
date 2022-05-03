@@ -14,10 +14,12 @@ import (
 // Example: GET https://localhost:8080/api/v1/hello
 func GetKey(c *gin.Context) {
 	key := c.Param("key")
+	boxerKey := db.BoxerKey{Key: key}
 	value, err := db.GlobalStore.Get(db.BoxerKey{Key: key})
 	if err != nil {
 		c.Status(http.StatusNotFound)
 	} else {
+		replication.GetLog().AppendLog(boxerKey, db.BoxerValue{}, replication.COMMAND_TYPE_READ)
 		c.JSON(http.StatusOK, value)
 	}
 }
@@ -40,9 +42,9 @@ func PutKey(c *gin.Context) {
 	boxerKey := db.BoxerKey{Key: key}
 	boxerValue := db.BoxerValue{Value: value, Meta: db.BoxerValueMetadata{Timestamp: time.Now().UnixNano()}}
 
+	db.GlobalStore.Put(boxerKey, boxerValue)
 	replication.GetLog().AppendLog(boxerKey, boxerValue, replication.COMMAND_TYPE_WRITE)
 
-	db.GlobalStore.Put(boxerKey, boxerValue)
 	c.Status(http.StatusOK)
 }
 
@@ -50,10 +52,13 @@ func PutKey(c *gin.Context) {
 // Example: DELETE https://localhost:8080/api/v1/hello
 func DeleteKey(c *gin.Context) {
 	key := c.Param("key")
+	boxerKey := db.BoxerKey{Key: key}
 	err := db.GlobalStore.Delete(db.BoxerKey{Key: key})
+
 	if err != nil {
 		c.Status(http.StatusNotFound)
 	} else {
+		replication.GetLog().AppendLog(boxerKey, db.BoxerValue{}, replication.COMMAND_TYPE_DELETE)
 		c.Status(http.StatusOK)
 	}
 }

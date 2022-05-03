@@ -12,10 +12,12 @@ import (
 
 func main() {
 
+	// TODO: Refactor this setup to functions
+
 	configuration := config.GetConfig()
 	// TODO: Not sure if this should be for follower as well as leader, we will see
 	log.Println("Initializing log...")
-	replication.InitializeLog()
+	replication.GetLog()
 
 	// InitializeLog needs to be called before InitializeStore
 	db.InitializeStore()
@@ -26,6 +28,9 @@ func main() {
 		for _, entry := range replication.GetLog().Entries {
 			if entry.CommandType == replication.COMMAND_TYPE_WRITE {
 				db.GlobalStore.Put(entry.EntryKey, entry.EntryValue)
+			}
+			if entry.CommandType == replication.COMMAND_TYPE_DELETE {
+				db.GlobalStore.Delete(entry.EntryKey)
 			}
 		}
 	}

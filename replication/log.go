@@ -14,44 +14,45 @@ import (
 // For replication, I have decided to go with Write-Ahead Logging (WAL)
 // More information can be found at: https://martinfowler.com/articles/patterns-of-distributed-systems/wal.html
 
+// These are the types of commands that can be written to the log
 const (
 	COMMAND_TYPE_WRITE  = "WRITE"
 	COMMAND_TYPE_DELETE = "DELETE"
 	COMMAND_TYPE_READ   = "READ"
 )
 
+// Log represents the WAL log that is persisted to disk, as well as replicated to follower nodes
 type Log struct {
-	Entries []Entry
-	File    *os.File
-	HadData bool
+	Entries []Entry  // The entries in the log
+	File    *os.File // The file that the log is persisted to
+	HadData bool     // Whether or not the log had data in it
 }
 
+// Entry represents a single entry in the WAL log
 type Entry struct {
-	EntryKey    db.BoxerKey
-	EntryValue  db.BoxerValue
-	CommandType string
-	Timestamp   int64
-}
-
-func (l *Log) AppendLog(key db.BoxerKey, value db.BoxerValue, commandType string) (bool, error) {
-	if commandType == COMMAND_TYPE_WRITE {
-		l.Entries = append(l.Entries, Entry{key, value, commandType, time.Now().UnixNano()})
-	}
-
-	// Write log to file
-	l.WriteLogToFile()
-
-	return true, nil
+	EntryKey    db.BoxerKey   // The key of the entry
+	EntryValue  db.BoxerValue // The value of the entry
+	CommandType string        // The type of command that was executed
+	Timestamp   int64         // The timestamp of the log write
 }
 
 var globalLog *Log = nil
 
-func InitializeLog() {
+// WriteEntry writes an entry to the log
+func (l *Log) AppendLog(key db.BoxerKey, value db.BoxerValue, commandType string) (bool, error) {
+
+	l.Entries = append(l.Entries, Entry{key, value, commandType, time.Now().UnixNano()})
+
+	// Write log to file
+	return l.writeLogToFile()
+}
+
+// InitializeLog initializes the log, and loads it from disk if it exists
+func initializeLog() {
 	if globalLog == nil {
 		globalLog = &Log{
 			Entries: make([]Entry, 0),
 		}
-
 		// Check if the file exists at the path
 		file, err := os.Open(config.GetConfig().LogFileLocation)
 		if os.IsNotExist(err) {
@@ -63,31 +64,35 @@ func InitializeLog() {
 			}
 		} else {
 			log.Println("Log file exists, reading from it")
-
 			byteValue, _ := ioutil.ReadAll(file)
 			var entries []Entry
-
 			json.Unmarshal(byteValue, &entries)
 			globalLog.Entries = entries
 			globalLog.HadData = true
 		}
-
 		globalLog.File = file
 	}
 }
 
+// GetLog returns the global log
 func GetLog() *Log {
 	if globalLog == nil {
-		InitializeLog()
+		initializeLog()
 	}
 	return globalLog
 }
 
-func (l *Log) WriteLogToFile() {
+// WriteLogToFile writes the log to disk
+func (l *Log) writeLogToFile() (bool, error) {
 	log.Println("saving log to file...")
-	// Write log to file
-	jsonData, _ := json.Marshal(l.Entries)
-
-	ioutil.WriteFile(config.GetConfig().LogFileLocation, jsonData, 0644)
+	jsonData, err := json.Marshal(l.Entries)
+	if err != nil {
+		return false, err
+	}
+	err = ioutil.WriteFile(config.GetConfig().LogFileLocation, jsonData, 0644)
+	if err != nil {
+		return false, err
+	}
 	log.Println("log saved to file")
+	return true, nil
 }
