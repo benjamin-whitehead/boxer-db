@@ -15,7 +15,6 @@ func main() {
 	// TODO: Refactor this setup to functions
 
 	configuration := config.GetConfig()
-	// TODO: Not sure if this should be for follower as well as leader, we will see
 	log.Println("Initializing log...")
 	replication.GetLog()
 

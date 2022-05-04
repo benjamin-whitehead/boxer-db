@@ -12,26 +12,34 @@ import (
 )
 
 func ReplicateLog() {
-	addresses := config.GetConfig().ReplicationNodes
+	if config.GetConfig().Role == config.ROLE_LEADER {
+		addresses := config.GetConfig().ReplicationNodes
 
-	// Get the latest entry in the log
-	latestEntry := globalLog.Entries[len(globalLog.Entries)-1]
+		// Get the latest entry in the log
+		latestEntry := globalLog.Entries
 
-	postBody, _ := json.Marshal(map[string]interface{}{
-		"Log": latestEntry,
-	})
+		for _, address := range addresses {
 
-	responseBody := bytes.NewBuffer(postBody)
+			postBody, _ := json.Marshal(map[string]interface{}{
+				"log": latestEntry,
+			})
 
-	requestUrl := fmt.Sprintf("%s/api/v1/replication/", addresses[0])
+			responseBody := bytes.NewBuffer(postBody)
 
-	response, err := http.Post(requestUrl, "application/json", responseBody)
-	if err != nil {
-		log.Fatal(err.Error())
+			requestUrl := fmt.Sprintf("%s/api/v1/replication", address)
+			log.Println(requestUrl)
+
+			response, err := http.Post(requestUrl, "application/json", responseBody)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			body, _ := ioutil.ReadAll(response.Body)
+
+			log.Println(string(body))
+
+		}
+
 	}
-
-	body, _ := ioutil.ReadAll(response.Body)
-
-	log.Println(string(body))
 
 }

@@ -10,8 +10,8 @@ func InitializeAPIRoutes(router *gin.Engine) {
 	router.POST("/api/v1/:key", checkRoleMiddleware(), PutKey)
 	router.DELETE("api/v1/:key", checkRoleMiddleware(), DeleteKey)
 
-	router.POST("/api/v1/replication/", checkRoleForReplicationMiddleware(), ReplicateLog)
-	router.PUT("/api/v1/replication/", checkRoleForReplicationMiddleware(), ReplicateLog)
+	router.POST("/api/v1/replication", checkRoleForReplicationMiddleware(), ReplicateLog)
+	router.PUT("/api/v1/replication", checkRoleForReplicationMiddleware(), ReplicateLog)
 
 	router.GET("/api/v1/role", GetRole)
 

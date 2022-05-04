@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -70,15 +71,22 @@ func GetRole(c *gin.Context) {
 }
 
 func ReplicateLog(c *gin.Context) {
+
+	log.Println("HERE!")
+
 	var request ReplicationRequest
 	if err := c.BindJSON(&request); err != nil {
+		log.Println("ERROR: ", err.Error())
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
 	var err error
 
+	log.Println(len(request.Log))
 	for _, logEntry := range request.Log {
+
+		log.Println(logEntry.CommandType)
 
 		if logEntry.CommandType == replication.COMMAND_TYPE_WRITE {
 			db.GlobalStore.Put(logEntry.EntryKey, logEntry.EntryValue)
@@ -97,6 +105,7 @@ func ReplicateLog(c *gin.Context) {
 	if err != nil {
 		c.Status(http.StatusNotFound)
 	}
+
 	c.Status(http.StatusOK)
 
 }

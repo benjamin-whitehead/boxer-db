@@ -30,10 +30,10 @@ type Log struct {
 
 // Entry represents a single entry in the WAL log
 type Entry struct {
-	EntryKey    db.BoxerKey   // The key of the entry
-	EntryValue  db.BoxerValue // The value of the entry
-	CommandType string        // The type of command that was executed
-	Timestamp   int64         // The timestamp of the log write
+	EntryKey    db.BoxerKey   `json:"key"`          // The key of the entry
+	EntryValue  db.BoxerValue `json:"value"`        // The value of the entry
+	CommandType string        `json:"command_type"` // The type of command that was executed
+	Timestamp   int64         `json:"timestamp"`    // The timestamp of the log write
 }
 
 var globalLog *Log = nil
