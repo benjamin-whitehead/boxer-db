@@ -7,39 +7,59 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/benjamin-whitehead/boxer-db/m/v2/config"
 )
 
+func Replicate(address string) {
+	postBody, _ := json.Marshal(map[string]interface{}{
+		"log": globalLog.Entries,
+	})
+
+	responseBody := bytes.NewBuffer(postBody)
+
+	requestUrl := fmt.Sprintf("%s/api/v1/replication", address)
+	log.Println(requestUrl)
+
+	response, err := http.Post(requestUrl, "application/json", responseBody)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	body, _ := ioutil.ReadAll(response.Body)
+	log.Println(string(body))
+}
+
 func ReplicateLog() {
-	if config.GetConfig().Role == config.ROLE_LEADER {
-		addresses := config.GetConfig().ReplicationNodes
+	if config.GetConfig().Role != config.ROLE_LEADER {
+		log.Println("error: not leader")
+		return
+	}
 
-		// Get the latest entry in the log
-		latestEntry := globalLog.Entries
+	var wg sync.WaitGroup
 
-		for _, address := range addresses {
+	addresses := config.GetConfig().ReplicationNodes
 
-			postBody, _ := json.Marshal(map[string]interface{}{
-				"log": latestEntry,
-			})
+	quorum := config.GetConfig().QuorumSize - 1
 
-			responseBody := bytes.NewBuffer(postBody)
+	var index int
 
-			requestUrl := fmt.Sprintf("%s/api/v1/replication", address)
-			log.Println(requestUrl)
+	wg.Add(quorum)
+	for index = 0; index < quorum; index++ {
 
-			response, err := http.Post(requestUrl, "application/json", responseBody)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
-
-			body, _ := ioutil.ReadAll(response.Body)
-
-			log.Println(string(body))
-
-		}
+		go func(address string) {
+			defer wg.Done()
+			Replicate(address)
+		}(addresses[index])
 
 	}
+
+	for ; index < len(addresses); index++ {
+		go func(address string) {
+			Replicate(address)
+		}(addresses[index])
+	}
+	wg.Wait()
 
 }

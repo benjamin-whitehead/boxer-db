@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -70,23 +69,19 @@ func GetRole(c *gin.Context) {
 	c.JSON(http.StatusOK, RoleResponse{Role: role})
 }
 
+// ReplicateLog replicates the log to followers
 func ReplicateLog(c *gin.Context) {
 
-	log.Println("HERE!")
-
+	// Bind the POST body to the request struct
 	var request ReplicationRequest
 	if err := c.BindJSON(&request); err != nil {
-		log.Println("ERROR: ", err.Error())
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
+	// Iterate over the log and add each entry to the key value store
 	var err error
-
-	log.Println(len(request.Log))
 	for _, logEntry := range request.Log {
-
-		log.Println(logEntry.CommandType)
 
 		if logEntry.CommandType == replication.COMMAND_TYPE_WRITE {
 			db.GlobalStore.Put(logEntry.EntryKey, logEntry.EntryValue)
@@ -102,10 +97,11 @@ func ReplicateLog(c *gin.Context) {
 		}
 
 	}
+	// If an error occurred, then an error occurred with the replication, return not found
 	if err != nil {
 		c.Status(http.StatusNotFound)
 	}
 
+	// Otherwise, return ok
 	c.Status(http.StatusOK)
-
 }

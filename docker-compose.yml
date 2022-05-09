@@ -2,18 +2,15 @@ version: "3.9"
 
 volumes:
   leader_volume:
-    driver: local
   follower_one_vol:
-    driver: local
   follower_two_vol:
-    driver: local
   follower_three_vol:
-    driver: local
+
 
 services:
   leader:
     volumes:
-      - leader_volume:/home/boxer/volumes/leader
+      - ./volumes/leader_volume:/tmp
     build: .
     ports:
       - "8080:8080"
@@ -21,8 +18,9 @@ services:
       - NODE_ROLE=LEADER
       # TODO: Abstract the ports into variables, and dynamically create this env variable based on the ports
       - REPLICATION_NODES=http://follower_one:8080,http://follower_two:8080,http://follower_three:8080
-      - QUORUM_SIZE=2
+      - QUORUM_SIZE=3
       - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
 
   follower_one:
     build: .
@@ -31,8 +29,9 @@ services:
     environment:
       - NODE_ROLE=FOLLOWER
       - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
     volumes:
-      - follower_one_vol:/home/boxer/volumes/follower_one
+      - ./volumes/follower_one_vol:/tmp
 
   follower_two:
     build: .
@@ -41,8 +40,9 @@ services:
     environment:
       - NODE_ROLE=FOLLOWER
       - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
     volumes:
-      - follower_two_vol:/home/boxer/volumes/follower_two
+      - ./volumes/follower_two_vol:/tmp
 
   follower_three:
     build: .
@@ -51,5 +51,6 @@ services:
     environment:
       - NODE_ROLE=FOLLOWER
       - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
     volumes:
-      - follower_three_vol:/home/boxer/volumes/follower_three
+      - ./volumes/follower_three_vol:/tmp
