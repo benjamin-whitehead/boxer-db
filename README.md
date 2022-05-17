@@ -93,7 +93,7 @@ This occurs when the key is not found in the database.
  ```
  docker-compose up --build
  ```
-Which will start a local cluster, that you will be able to make requests to on localhost:8080. 
+Which will start a local cluster with one leader and three followers, that you will be able to make requests to on localhost:8080. The configuration for each node is defined in the docker compose file.
 
 ## Issues:
 There are some issues that still need to be worked out. One issue is with the Docker Compose file. I am still getting used to Docker and Docker Compose, and there is an issue where if you stop the docker compose cluster, the data that is saved into the file is lost. This is because I am having issues with the volumes.
