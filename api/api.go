@@ -13,6 +13,7 @@ func InitializeAPIRoutes(router *gin.Engine) {
 	router.POST("/api/v1/replication", checkRoleForReplicationMiddleware(), ReplicateLog)
 	router.PUT("/api/v1/replication", checkRoleForReplicationMiddleware(), ReplicateLog)
 
+	router.GET("/api/v1/log", GetLog)
 	router.GET("/api/v1/role", GetRole)
 
 }

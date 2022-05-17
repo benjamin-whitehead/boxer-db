@@ -71,26 +71,26 @@ func GetRole(c *gin.Context) {
 
 // ReplicateLog replicates the log to followers
 func ReplicateLog(c *gin.Context) {
-
 	// Bind the POST body to the request struct
 	var request ReplicationRequest
 	if err := c.BindJSON(&request); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-
 	// Iterate over the log and add each entry to the key value store
 	var err error
 	for _, logEntry := range request.Log {
-
+		// If the entry is a WRITE command, write to the store
 		if logEntry.CommandType == replication.COMMAND_TYPE_WRITE {
 			db.GlobalStore.Put(logEntry.EntryKey, logEntry.EntryValue)
 			replication.GetLog().AppendLog(logEntry.EntryKey, logEntry.EntryValue, replication.COMMAND_TYPE_WRITE)
 		}
+		// If the entry is a DELETE command, delete from the store
 		if logEntry.CommandType == replication.COMMAND_TYPE_DELETE {
 			err = db.GlobalStore.Delete(logEntry.EntryKey)
 			replication.GetLog().AppendLog(logEntry.EntryKey, db.BoxerValue{}, replication.COMMAND_TYPE_DELETE)
 		}
+		// If the entry is a READ command, READ from the store
 		if logEntry.CommandType == replication.COMMAND_TYPE_READ {
 			_, err = db.GlobalStore.Get(logEntry.EntryKey)
 			replication.GetLog().AppendLog(logEntry.EntryKey, db.BoxerValue{}, replication.COMMAND_TYPE_READ)
@@ -101,7 +101,12 @@ func ReplicateLog(c *gin.Context) {
 	if err != nil {
 		c.Status(http.StatusNotFound)
 	}
-
 	// Otherwise, return ok
 	c.Status(http.StatusOK)
+}
+
+// GetLog returns the log for this node
+func GetLog(c *gin.Context) {
+	log := replication.GetLog().Entries
+	c.JSON(http.StatusOK, log)
 }
