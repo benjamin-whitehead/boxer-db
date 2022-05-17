@@ -20,6 +20,7 @@ type Configuration struct {
 	Role             string
 	ReplicationNodes []string
 	QuorumSize       int
+	LogFileLocation  string
 }
 
 func handleEnvironmentVariables() error {
@@ -54,6 +55,13 @@ func handleEnvironmentVariables() error {
 	}
 
 	globalConfig.QuorumSize = size
+
+	logLocation := os.Getenv("LOG_FILE")
+	if logLocation == "" {
+		return ErrorMissingLogFileLocation()
+	}
+
+	globalConfig.LogFileLocation = logLocation
 
 	return nil
 }

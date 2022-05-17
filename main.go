@@ -6,16 +6,39 @@ import (
 	"github.com/benjamin-whitehead/boxer-db/m/v2/api"
 	"github.com/benjamin-whitehead/boxer-db/m/v2/config"
 	"github.com/benjamin-whitehead/boxer-db/m/v2/db"
+	"github.com/benjamin-whitehead/boxer-db/m/v2/replication"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db.InitializeStore()
+
+	// TODO: Refactor this setup to functions
+
 	configuration := config.GetConfig()
+	log.Println("Initializing log...")
+	replication.GetLog()
+
+	// InitializeLog needs to be called before InitializeStore
+	db.InitializeStore()
+
+	if replication.GetLog().HadData {
+		log.Println("Restoring log...")
+		// Had data, load the data into the store
+		for _, entry := range replication.GetLog().Entries {
+			if entry.CommandType == replication.COMMAND_TYPE_WRITE {
+				db.GlobalStore.Put(entry.EntryKey, entry.EntryValue)
+			}
+			if entry.CommandType == replication.COMMAND_TYPE_DELETE {
+				db.GlobalStore.Delete(entry.EntryKey)
+			}
+		}
+	}
 
 	router := gin.Default()
 
 	api.InitializeAPIRoutes(router)
+
+	// Initialize the log
 
 	// TODO: Refactor
 	if configuration.Role == config.ROLE_LEADER {

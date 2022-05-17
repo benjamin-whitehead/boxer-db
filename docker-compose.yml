@@ -1,14 +1,26 @@
 version: "3.9"
+
+volumes:
+  leader_volume:
+  follower_one_vol:
+  follower_two_vol:
+  follower_three_vol:
+
+
 services:
   leader:
+    volumes:
+      - ./volumes/leader_volume:/tmp
     build: .
     ports:
       - "8080:8080"
     environment:
       - NODE_ROLE=LEADER
       # TODO: Abstract the ports into variables, and dynamically create this env variable based on the ports
-      - REPLICATION_NODES=http://localhost:8081
-      - QUORUM_SIZE=2
+      - REPLICATION_NODES=http://follower_one:8080,http://follower_two:8080,http://follower_three:8080
+      - QUORUM_SIZE=3
+      - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
 
   follower_one:
     build: .
@@ -16,3 +28,29 @@ services:
       - "8081:8080"
     environment:
       - NODE_ROLE=FOLLOWER
+      - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
+    volumes:
+      - ./volumes/follower_one_vol:/tmp
+
+  follower_two:
+    build: .
+    ports:
+      - "8082:8080"
+    environment:
+      - NODE_ROLE=FOLLOWER
+      - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
+    volumes:
+      - ./volumes/follower_two_vol:/tmp
+
+  follower_three:
+    build: .
+    ports:
+      - "8083:8080"
+    environment:
+      - NODE_ROLE=FOLLOWER
+      - LOG_FILE=./tmp/wal.log
+      - GIN_MODE=release
+    volumes:
+      - ./volumes/follower_three_vol:/tmp

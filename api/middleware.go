@@ -19,3 +19,16 @@ func checkRoleMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func checkRoleForReplicationMiddleware() gin.HandlerFunc {
+	role := config.GetConfig().Role
+
+	return func(c *gin.Context) {
+		if role != config.ROLE_FOLLOWER {
+			c.AbortWithStatusJSON(http.StatusForbidden, InvalidRequestToFollowerResponse{
+				Message: "This action is only available to the followers",
+			})
+		}
+		c.Next()
+	}
+}
